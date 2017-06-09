@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-
 #include "mmdbg.h"
 
 static size_t total_alloc = 0;
@@ -12,6 +11,7 @@ static pthread_mutex_t mutex;
 int memory_dbg_init()
 {
 	TAILQ_INIT(&head);
+	total_alloc = total_free = 0;
 	return pthread_mutex_init(&mutex, NULL);
 }
 
@@ -57,6 +57,9 @@ int memory_dbg_finalize()
 {
 	pthread_mutex_lock(&mutex);
 	np	= TAILQ_FIRST(&head);
+	if (np != NULL) {
+		printf("[%s:%s():%d] potential loss %ld bytes memory!\n", __FILE__, __FUNCTION__, __LINE__, (total_alloc - total_free));
+	}
 	while (np!= NULL) {
 		printf("[%s:%s():%d] potential memory leakage!!! np %p (ptr = %p, size = %lu)\n", __FILE__, __FUNCTION__, __LINE__, np, np->p, np->size);
 		TAILQ_REMOVE(&head, np, entries);
@@ -69,9 +72,9 @@ int memory_dbg_finalize()
 
 static int _tailq_size()
 {
-	pthread_mutex_lock(&mutex);
 	int num = 0;
-	TAILQ_FOREACH(n1, &head, entries)
+	pthread_mutex_lock(&mutex);
+	TAILQ_FOREACH(np, &head, entries)
 	{
 		num++;
 	}

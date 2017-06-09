@@ -19,7 +19,7 @@ struct entry {
 	void   *p;
 	size_t size;
 	TAILQ_ENTRY(entry) entries; 	/* Tail queue. */
-} *np, *n1;
+} *np;
 
 int memory_dbg_init();
 
